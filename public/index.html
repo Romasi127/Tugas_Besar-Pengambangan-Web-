@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kegiatan KampusKu - Platform Kegiatan</title>
+    <style>
+        :root {
+            --primary-color: #3f51b5; /* Indigo */
+            --secondary-color: #7986cb;
+            --background-color: #f4f6f9;
+            --text-color-dark: #f7f5f5;
+            --text-color-light: #ffffff;
+            --card-bg: #ffffff;
+        }
+        
+        /* --- Background Styling: Gambar Gedung --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+            
+            /* Background Image Setup */
+            background-image: url('/images/university.png'); 
+            background-size: cover; 
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; 
+            
+            position: relative;
+            color: var(--text-color-light); 
+        }
+
+        /* Overlay gelap agar teks mudah dibaca */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.45); 
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 25px;
+            position: relative; 
+            z-index: 1;
+        }
+
+        /* --- REVISI HEADER STYLING (LEBIH TERANG) --- */
+        header {
+            /* Warna Putih Transparan 95% (Lebih Terang dari 85%) */
+            background-color: rgba(255, 255, 255, 0.14); 
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; 
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .logo-container img {
+            height: 50px; 
+            margin-right: 12px;
+            object-fit: contain;
+            filter: none; 
+        }
+        .logo-text {
+            font-size: 2.2em; 
+            font-weight: 700;
+            color: var(--text-color-dark); 
+            letter-spacing: -0.5px;
+        }
+        .btn-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 18px;
+            border: none; 
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-header:hover {
+            background-color: #303f9f;
+        }
+
+        /* --- Hero Section Styling --- */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; 
+            padding: 100px 0; 
+            min-height: calc(100vh - 80px);
+        }
+        .hero-content {
+            max-width: 500px; 
+            color: var(--text-color-light); 
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6); 
+        }
+        .hero-content h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            color: var(--text-color-light); 
+            line-height: 1.1;
+        }
+        .hero-content p {
+            font-size: 1.3em;
+            margin-bottom: 40px;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 35px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, border-color 0.3s;
+            display: inline-block;
+        }
+        .btn-primary:hover {
+            background-color: #040a2b;
+            border-color: #303f9f;
+            transform: translateY(-2px);
+        }
+
+        /* Media Query untuk Responsif */
+        @media (max-width: 850px) {
+            body {
+                background-position: 70% center; 
+            }
+            .hero {
+                justify-content: center;
+                text-align: center;
+            }
+            .hero-content {
+                max-width: 90%;
+            }
+            .hero-content h1 {
+                font-size: 2.5em;
+            }
+            .logo-container img {
+                height: 40px; 
+            }
+            .logo-text {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="#" class="logo-container">
+                <img src="/images/logo.png" alt="Logo Kampus"> 
+                <span class="logo-text">KampusKu</span>
+            </a>
+            <a href="login.html" class="btn-header">Login</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Temukan dan Daftarkan Dirimu di Kegiatan Kampus Terbaik.</h1>
+                <p>Platform terpadu untuk melihat semua kegiatan, seminar, dan workshop terbaru. Semua Mahasiswa siap-siap beraksi!</p>
+                <a href="login.html" class="btn-primary">Mulai Sekarang &rarr;</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

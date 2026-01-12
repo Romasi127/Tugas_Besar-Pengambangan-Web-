@@ -1,0 +1,60 @@
+<!-- public/login.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login - KegiatanKampusku</title>
+  <style>
+    :root{--accent:#6366f1;--bg:#f8fafc}
+    *{box-sizing:border-box;font-family:Inter,Arial}
+    body{margin:0;background:var(--bg);display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{width:420px;background:white;padding:22px;border-radius:12px;box-shadow:0 8px 24px rgba(2,6,23,0.06)}
+    h2{margin:0 0 8px}
+    label{display:block;font-size:13px;margin-top:10px;color:#374151}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef5;margin-top:6px}
+    .btn{margin-top:14px;padding:10px;border-radius:8px;border:0;width:100%;cursor:pointer;background:var(--accent);color:white}
+    .muted{font-size:13px;color:#6b7280;margin-top:10px;text-align:center}
+    a{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Login</h2>
+    <div style="font-size:13px;color:#6b7280">Masuk menggunakan username dan password</div>
+
+    <label>Username</label>
+    <input id="username" placeholder="Nama saat register (username)"/>
+
+    <label>Password</label>
+    <input id="password" type="password" />
+
+    <button class="btn" id="btnLogin">Masuk</button>
+    <div class="muted">Belum punya akun? <a href="register.html">Daftar</a></div>
+  </div>
+
+  <script>
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      if (!username || !password) return alert('Isi username & password');
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Simpan sedikit info di localStorage untuk tampilan client
+        localStorage.setItem('kk_user', JSON.stringify(data.user));
+        if (data.user.role === 'admin') location.href = 'admin.html';
+        else location.href = 'mahasiswa.html';
+      } else {
+        alert(data.message || 'Login gagal');
+      }
+    });
+  </script>
+</body>
+</html>

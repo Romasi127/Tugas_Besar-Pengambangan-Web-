@@ -1,0 +1,233 @@
+<!-- public/admin.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin - KegiatanKampusku</title>
+  <style>
+    :root{--accent:#ef4444;--muted:#6b7280;--bg:#f3f4f6}
+    *{box-sizing:border-box;font-family:Inter,Arial}
+    body{margin:0;background:var(--bg);color:#111}
+    header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:white;box-shadow:0 1px 0 rgba(0,0,0,0.04)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+  width:44px;
+  height:44px;
+}
+
+.logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+    .container{padding:18px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:16px}
+    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+    input,textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef5;margin-top:8px}
+    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--accent);color:white}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
+    .profile{display:flex;gap:10px;align-items:center}
+    .avatar{width:40px;height:40px;border-radius:999px;background:#e6eef5;display:flex;align-items:center;justify-content:center}
+    .small{font-size:13px;color:var(--muted)}
+    .actions{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">
+  <img src="images/logo.png" alt="Logo Kampus">
+</div>
+      <div>
+        <div style="font-weight:700">KegiatanKampusku — Admin</div>
+        <div class="small">Kelola kegiatan dan lihat pendaftar</div>
+      </div>
+    </div>
+
+    <div class="profile">
+      <div class="avatar" id="avatar">A</div>
+      <div>
+        <div id="profileName">Admin</div>
+        <div class="small"><a href="#" id="btnLogout">Logout</a></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <h3>Tambah/Edit Kegiatan</h3>
+        <input id="k_nama" placeholder="Nama kegiatan"/>
+        <textarea id="k_desc" rows="4" placeholder="Deskripsi (opsional)"></textarea>
+        <label class="small">Tanggal Mulai</label>
+        <input id="k_mulai" type="date"/>
+        <label class="small">Tanggal Akhir (deadline pendaftaran)</label>
+        <input id="k_akhir" type="date"/>
+        <div style="margin-top:10px" class="actions">
+          <button class="btn btn-primary" id="btnCreate">Simpan</button>
+          <button class="btn" id="btnReset">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Daftar Kegiatan</h3>
+        <div style="margin-bottom:12px">
+          <input id="searchK" placeholder="Filter nama kegiatan..." style="width:60%;padding:8px;border-radius:8px;border:1px solid #e6eef5"/>
+          <button class="btn" id="btnRefresh">Refresh</button>
+        </div>
+        <div id="kegiatanList"></div>
+
+        <h3 style="margin-top:18px">Pendaftar</h3>
+        <div style="margin-bottom:10px">
+          <select id="filterK">
+            <option value="">Semua Kegiatan</option>
+          </select>
+          <button id="btnLoadP" class="btn">Tampilkan</button>
+        </div>
+        <div id="pendaftarTable" style="overflow:auto;max-height:360px"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple client that relies on session cookie
+    let editingId = null;
+    const user = JSON.parse(localStorage.getItem('kk_user') || 'null');
+    if (!user || user.role !== 'admin') {
+      alert('Anda harus login sebagai admin');
+      location.href = 'login.html';
+    }
+    document.getElementById('profileName').innerText = user.username;
+    document.getElementById('avatar').innerText = user.username.charAt(0).toUpperCase();
+
+    // Utilities
+    async function getKegiatan() {
+      const res = await fetch('/kegiatan', { credentials: 'include' });
+      return res.json();
+    }
+
+    async function loadKegiatan() {
+      const r = await getKegiatan();
+      if (!r.success) return alert('Gagal memuat kegiatan');
+      const list = r.kegiatan;
+      const el = document.getElementById('kegiatanList');
+      const filterSel = document.getElementById('filterK');
+      el.innerHTML = '';
+      filterSel.innerHTML = '<option value="">Semua Kegiatan</option>';
+      if (!list.length) el.innerHTML = '<div class="small">Belum ada kegiatan</div>';
+      list.forEach(k => {
+        const div = document.createElement('div');
+        div.style.padding = '8px';
+        div.style.borderBottom = '1px solid #eef2f7';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600">${k.nama_kegiatan}</div>
+              <div class="small" style="white-space:normal;line-height:1.5">
+  ${k.deskripsi || ''}
+</div>
+
+             <div class="small">Deadline: ${formatTanggal(k.tanggal_akhir)}</div>
+             <td>${new Date(r.tanggal_daftar).toLocaleDateString("id-ID")}</td>
+
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn" onclick="editK(${k.id})">Edit</button>
+              <button class="btn" onclick="delK(${k.id})">Hapus</button>
+            </div>
+          </div>`;
+        el.appendChild(div);
+
+        const opt = document.createElement('option');
+        opt.value = k.id;
+        opt.textContent = k.nama_kegiatan;
+        filterSel.appendChild(opt);
+      });
+    }
+
+    async function createK() {
+      const nama = document.getElementById('k_nama').value.trim();
+      const desc = document.getElementById('k_desc').value.trim();
+      const mulai = document.getElementById('k_mulai').value;
+      const akhir = document.getElementById('k_akhir').value;
+      if (!nama || !mulai || !akhir) return alert('Lengkapi nama, tanggal mulai & akhir');
+      const payload = { nama_kegiatan: nama, deskripsi: desc, tanggal_mulai: mulai, tanggal_akhir: akhir };
+      let url = '/kegiatan', method = 'POST';
+      if (editingId) { url = '/kegiatan/' + editingId; method = 'PUT'; }
+      const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Sukses');
+        document.getElementById('btnReset').click();
+        editingId = null;
+        loadKegiatan();
+      } else alert(data.message || 'Gagal');
+    }
+
+    async function delK(id) {
+      if (!confirm('Hapus kegiatan ini?')) return;
+      const res = await fetch('/kegiatan/'+id, { method:'DELETE', credentials:'include' });
+      const d = await res.json();
+      if (d.success) loadKegiatan(); else alert(d.message || 'Gagal');
+    }
+
+    function editK(id) {
+      // find kegiatan from list and fill
+      fetch('/kegiatan', { credentials:'include' }).then(r=>r.json()).then(resp=>{
+        const k = resp.kegiatan.find(x=>x.id==id);
+        if (!k) return alert('Tidak ditemukan');
+        editingId = id;
+        document.getElementById('k_nama').value = k.nama_kegiatan;
+        document.getElementById('k_desc').value = k.deskripsi || '';
+        document.getElementById('k_mulai').value = k.tanggal_mulai;
+        document.getElementById('k_akhir').value = k.tanggal_akhir;
+      });
+    }
+
+    async function loadPendaftar() {
+      const kegiatan_id = document.getElementById('filterK').value;
+      const url = '/pendaftaran/admin' + (kegiatan_id ? ('?kegiatan_id=' + kegiatan_id) : '');
+      const res = await fetch(url, { credentials:'include' });
+      const data = await res.json();
+      if (!data.success) return alert('Gagal memuat pendaftar');
+      const rows = data.pendaftar;
+      const wrap = document.getElementById('pendaftarTable');
+      if (!rows.length) { wrap.innerHTML = '<div class="small">Belum ada pendaftar</div>'; return; }
+      let html = '<table><thead><tr><th>Nama</th><th>NIM</th><th>Prodi</th><th>Email</th><th>Kegiatan</th><th>Tanggal Daftar</th></tr></thead><tbody>';
+      rows.forEach(r=>{
+        html += `<tr><td>${r.nama}</td><td>${r.nim}</td><td>${r.prodi}</td><td>${r.email}</td><td>${r.nama_kegiatan}</td><td>${new Date(r.tanggal_daftar).toLocaleString()}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    // events
+    document.getElementById('btnCreate').addEventListener('click', createK);
+    document.getElementById('btnReset').addEventListener('click', ()=>{ editingId=null; document.getElementById('k_nama').value=''; document.getElementById('k_desc').value=''; document.getElementById('k_mulai').value=''; document.getElementById('k_akhir').value=''; });
+    document.getElementById('btnRefresh').addEventListener('click', loadKegiatan);
+    document.getElementById('btnLoadP').addEventListener('click', loadPendaftar);
+    document.getElementById('btnLogout').addEventListener('click', async (e)=> {
+      e.preventDefault();
+      await fetch('/logout', { method:'POST', credentials:'include' });
+      localStorage.removeItem('kk_user');
+      location.href = 'login.html';
+    });
+
+    // initial load
+    loadKegiatan();
+
+    function formatTanggal(tgl) {
+  const d = new Date(tgl);
+  return d.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "kegiatan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts":
+  {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": 
+  {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.1",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "mysql2": "^3.15.3"
+  }
+}

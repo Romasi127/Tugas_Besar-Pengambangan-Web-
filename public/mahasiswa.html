@@ -1,0 +1,204 @@
+<!-- public/mahasiswa.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mahasiswa - KegiatanKampusku</title>
+  <style>
+    :root{--accent:#0ea5a4;--muted:#6b7280;--bg:#f8fafc}
+    *{box-sizing:border-box;font-family:Inter,Arial}
+    body{margin:0;background:var(--bg)}
+    header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:white;box-shadow:0 1px 0 rgba(0,0,0,0.04)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+  width:44px;
+  height:44px;
+}
+
+.logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+    .container{padding:18px}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:16px}
+    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+    .small{font-size:13px;color:var(--muted)}
+    .k-item{padding:10px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:center}
+    button{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--accent);color:white}
+    .readonly{background:#f8fafc;padding:8px;border-radius:8px;border:1px solid #e6eef5}
+    .modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.4)}
+    .modal-card{background:white;padding:16px;border-radius:12px;width:360px}
+    input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef5;margin-top:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">
+  <img src="images/logo.png" alt="Logo Kampus">
+</div>
+      <div>
+        <div style="font-weight:700">KegiatanKampusku</div>
+        <div class="small">Dashboard Mahasiswa</div>
+      </div>
+    </div>
+    <div>
+      <span id="userName" class="small">User</span>
+      <button id="logoutBtn" style="margin-left:12px">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h3>Daftar Kegiatan</h3>
+          <div id="listKegiatan"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Riwayat Pendaftaran</h3>
+          <div id="riwayat"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Profil</h3>
+        <div style="margin-top:8px">
+          <div><strong id="pName">Nama</strong></div>
+          <div class="small" id="pEmail">email</div>
+        </div>
+        <div style="margin-top:12px"><button id="btnRefresh" class="btn-primary">Refresh</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal daftar -->
+  <div id="modal" style="display:none" class="modal">
+    <div class="modal-card">
+      <h3>Form Pendaftaran</h3>
+      <div class="small">Nama (readonly)</div>
+      <div class="readonly" id="f_nama"></div>
+      <div class="small" style="margin-top:8px">Email (readonly)</div>
+      <div class="readonly" id="f_email"></div>
+      <div class="small" style="margin-top:8px">Kegiatan (readonly)</div>
+      <div class="readonly" id="f_kegiatan"></div>
+
+      <label>NIM</label>
+      <input id="f_nim" placeholder="2210xxxxxx"/>
+      <label>Program Studi</label>
+      <input id="f_prodi" placeholder="Teknik Informatika"/>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <button id="btnCancel">Batal</button>
+        <button id="btnSubmit" class="btn-primary">Daftar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('kk_user') || 'null');
+    if (!user || user.role !== 'mahasiswa') {
+      alert('Login sebagai mahasiswa diperlukan');
+      location.href = 'login.html';
+    }
+    document.getElementById('userName').innerText = user.username;
+    document.getElementById('pName').innerText = user.username;
+    document.getElementById('pEmail').innerText = user.email;
+
+    async function loadK() {
+      const res = await fetch('/kegiatan', { credentials:'include' });
+      const data = await res.json();
+      const wrap = document.getElementById('listKegiatan');
+      wrap.innerHTML = '';
+      if (!data.success || !data.kegiatan.length) { wrap.innerHTML = '<div class="small">Belum ada kegiatan</div>'; return; }
+
+      data.kegiatan.forEach(k=>{
+        const now = new Date();
+        const deadline = new Date(k.tanggal_akhir);
+deadline.setHours(23,59,59,999);
+const closed = deadline < now;
+
+        const div = document.createElement('div');
+        div.className = 'k-item';
+        div.innerHTML = `<div>
+            <div style="font-weight:600">${k.nama_kegiatan}</div>
+            <div class="small" style="white-space:normal;line-height:1.5">
+  ${k.deskripsi || ''}
+</div>
+
+            <div class="small">Deadline: ${k.tanggal_akhir}</div>
+          </div>
+          <div>
+            ${closed ? '<div class="small">Pendaftaran Ditutup</div>' : `<button class="btn-primary" onclick="openDaftar(${k.id},'${escapeHtml(k.nama_kegiatan)}')">Daftar</button>`}
+          </div>`;
+        wrap.appendChild(div);
+      });
+    }
+
+    function escapeHtml(s){ return s.replace(/"/g,'&quot;').replace(/'/g,"&#39;"); }
+
+    // modal functions
+    let selectedKegiatanId = null;
+    function openDaftar(id, nama) {
+      selectedKegiatanId = id;
+      document.getElementById('f_nama').innerText = user.username;
+      document.getElementById('f_email').innerText = user.email;
+      document.getElementById('f_kegiatan').innerText = nama;
+      document.getElementById('f_nim').value = '';
+      document.getElementById('f_prodi').value = '';
+      document.getElementById('modal').style.display = 'flex';
+    }
+    document.getElementById('btnCancel').addEventListener('click', ()=> document.getElementById('modal').style.display='none');
+
+    document.getElementById('btnSubmit').addEventListener('click', async () => {
+      const nim = document.getElementById('f_nim').value.trim();
+      const prodi = document.getElementById('f_prodi').value.trim();
+      if (!nim || !prodi) return alert('Isi NIM & Prodi');
+      const res = await fetch('/daftar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'include',
+        body: JSON.stringify({ kegiatan_id: selectedKegiatanId, nim, prodi })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Pendaftaran berhasil');
+        document.getElementById('modal').style.display='none';
+        loadRiwayat();
+      } else {
+        alert(data.message || 'Gagal mendaftar');
+      }
+    });
+
+    async function loadRiwayat() {
+      const res = await fetch('/pendaftaran/mahasiswa', { credentials:'include' });
+      const d = await res.json();
+      const wrap = document.getElementById('riwayat');
+      if (!d.success || !d.daftar.length) { wrap.innerHTML = '<div class="small">Belum ada pendaftaran</div>'; return; }
+      let html = '<table style="width:100%"><thead><tr><th>Kegiatan</th><th>NIM</th><th>Prodi</th><th>Tanggal</th></tr></thead><tbody>';
+      d.daftar.forEach(r=>{
+        html += `<tr><td>${r.nama_kegiatan}</td><td>${r.nim}</td><td>${r.prodi}</td><td>${new Date(r.tanggal_daftar).toLocaleString()}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/logout', { method:'POST', credentials:'include' });
+      localStorage.removeItem('kk_user');
+      location.href = 'login.html';
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', ()=> { loadK(); loadRiwayat(); });
+    // init
+    loadK();
+    loadRiwayat();
+
+    
+  </script>
+</body>
+</html>
